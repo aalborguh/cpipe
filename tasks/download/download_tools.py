@@ -67,6 +67,9 @@ def task_download_cpanm():
                     curl -L https://cpanmin.us/ -o cpanm
                     chmod +x cpanm
             ''', cwd=temp_dir)
+            return {
+                'dir': temp_dir
+            }
 
         return {
             'actions': [action],
