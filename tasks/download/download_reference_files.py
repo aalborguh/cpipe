@@ -311,7 +311,7 @@ def task_bwa_index_ucsc_reference():
     return {
         'targets': [UCSC_BWA_INDEX],
         'actions': [
-            '{tools}/bwa/bwa index -a bwtsw {data}/ucsc/ucsc.hg19.fasta'.format(tools=TOOLS_ROOT, data=DATA_ROOT)
+            '{tools}/bin/bwa index -a bwtsw {data}/ucsc/ucsc.hg19.fasta'.format(tools=TOOLS_ROOT, data=DATA_ROOT)
         ],
         'task_dep': [
             'install_bwa',
