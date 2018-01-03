@@ -10,7 +10,7 @@ from tasks.common import has_swift_auth
 from jinja2 import Template
 from tasks.download import *
 from tasks.install import *
-from os import path
+from pathlib import Path
 import re
 import subprocess
 from doit.tools import PythonInteractiveAction
@@ -81,11 +81,6 @@ def task_tool_assets():
             'install_vep_libs',
             'install_vep_plugins',
             'install_java_libs',
-            'install_bzip2',
-            'install_xz',
-            'install_pcre',
-            'install_libcurl',
-            'install_zlib',
             'install_vcfanno'
         ]
     }
@@ -100,8 +95,8 @@ def task_copy_config():
 
 
 def task_copy_main_config():
-    input = path.join(ROOT, 'pipeline', 'config.groovy.template')
-    output = path.join(ROOT, 'pipeline', 'config.groovy')
+    input = Path(ROOT, 'pipeline', 'config.groovy.template')
+    output = Path(ROOT, 'pipeline', 'config.groovy')
 
     def action():
         with open(input, 'r') as input_file, open(output, 'w') as output_file:

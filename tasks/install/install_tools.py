@@ -1,3 +1,4 @@
+from __future__ import print_function
 from pathlib import Path
 import os
 import glob
@@ -10,16 +11,11 @@ def task_install_perl():
     return {
         'actions': [
             cmd('''
-                cd %(perl_dir)s
-                ./Configure -de -Dprefix={}
-                make
-                make install
-            '''.format(INSTALL_ROOT)),
+               conda install -y perl
+            '''),
             (add_to_manifest, ['perl'])
         ],
-        'setup': ['download_perl'],
-        'getargs': {'perl_dir': ('download_perl', 'dir')},
-        'targets': [os.path.join(INSTALL_ROOT, 'bin', 'perl')],
+        'targets': [Path(CONDA_BIN, 'perl')],
         'uptodate': [not nectar_asset_needs_update('perl')],
     }
 
@@ -28,75 +24,51 @@ def task_install_r():
     return {
         'actions': [
             cmd('''
-                cd %(r_dir)s
-                ./configure --prefix={0}
-                make
-                make prefix={0} install
-            '''.format(INSTALL_ROOT)),
+                conda install -y r={}
+            '''.format(R_VERSION)),
             (add_to_manifest, ['r'])
         ],
-        'task_dep': ['install_perl', 'install_bzip2', 'install_xz', 'install_pcre', 'install_libcurl', 'install_zlib'],
-        'getargs': {'r_dir': ('download_r', 'dir')},
-        'setup': ['download_r'],
-        'targets': [os.path.join(INSTALL_BIN, 'R')],
+        'targets': [Path(CONDA_BIN, 'R')],
         'uptodate': [not nectar_asset_needs_update('r')],
     }
 
 
 def task_install_bwa():
-    def action(bwa_dir):
-        delete_and_copy(os.path.join(bwa_dir, 'bwa'), INSTALL_BIN)
-
     return {
         'actions': [
             cmd('''
-                cd %(bwa_dir)s
-                make
-            '''),
-            action,
+                conda install -y bwa={}
+            '''.format(BWA_VERSION)),
             (add_to_manifest, ['bwa'])
         ],
-        'getargs': {'bwa_dir': ('download_bwa', 'dir')},
-        'setup': ['download_bwa'],
-        'targets': [os.path.join(INSTALL_BIN, 'bwa')],
+        'targets': [Path(CONDA_BIN, 'bwa')],
         'uptodate': [not nectar_asset_needs_update('bwa')],
     }
 
 
 def task_install_htslib():
     return {
-        'task_dep': ['install_zlib'],
         'actions': [
             cmd('''
-                cd %(htslib_dir)s
-                ./configure --prefix={0}
-                make
-                make prefix={0} install
-                '''.format(INSTALL_ROOT)),
+            conda install -y htslib={}
+                '''.format(HTSLIB_VERSION)),
             (add_to_manifest, ['htslib'])
         ],
-        'getargs': {'htslib_dir': ('download_htslib', 'dir')},
-        'setup': ['download_htslib'],
-        'targets': [os.path.join(INSTALL_ROOT, 'bin', 'htsfile')],
+        'targets': [Path(CONDA_BIN, 'htsfile')],
         'uptodate': [not nectar_asset_needs_update('htslib')],
     }
 
 
 def task_install_samtools():
     return {
-        'task_dep': ['install_zlib', 'install_htslib'],
+        'task_dep': ['install_htslib'],
         'actions': [
             cmd('''
-                cd %(samtools_dir)s
-                ./configure --prefix={0} --with-htslib={0}
-                make
-                make prefix={0} install
-            '''.format(INSTALL_ROOT, INSTALL_LIB)),
+            conda install -y samtools={}
+            '''.format(SAMTOOLS_VERSION)),
             (add_to_manifest, ['samtools'])
         ],
-        'setup': ['download_samtools'],
-        'getargs': {'samtools_dir': ('download_samtools', 'dir')},
-        'targets': [os.path.join(INSTALL_ROOT, 'bin', 'samtools')],
+        'targets': [Path(CONDA_BIN, 'samtools')],
         'uptodate': [not nectar_asset_needs_update('samtools')],
     }
 
@@ -105,16 +77,11 @@ def task_install_bcftools():
     return {
         'actions': [
             cmd('''
-                cd %(bcftools_dir)s
-                make
-                make prefix={} install
-            '''.format(INSTALL_ROOT)),
+            conda install -y bcftools={}
+            '''.format(BCFTOOLS_VERSION)),
             (add_to_manifest, ['bcftools'])
         ],
-        'task_dep': ['install_zlib'],
-        'setup': ['download_bcftools'],
-        'getargs': {'bcftools_dir': ('download_bcftools', 'dir')},
-        'targets': [os.path.join(INSTALL_BIN, 'bcftools')],
+        'targets': [Path(CONDA_BIN, 'bcftools')],
         'uptodate': [not nectar_asset_needs_update('bcftools')],
     }
 
@@ -123,16 +90,11 @@ def task_install_bedtools():
     return {
         'actions': [
             cmd('''
-                cd %(bedtools_dir)s
-                make
-                make prefix={} install
-            '''.format(INSTALL_ROOT)),
+            conda install -y bedtools={version}
+            '''.format(version=BEDTOOLS_VERSION)),
             (add_to_manifest, ['bedtools'])
         ],
-        'getargs': {'bedtools_dir': ('download_bedtools', 'dir')},
-        'task_dep': ['install_zlib'],
-        'setup': ['download_bedtools'],
-        'targets': [os.path.join(INSTALL_BIN, 'bedtools')],
+        'targets': [Path(CONDA_BIN, 'bedtools')],
         'uptodate': [not nectar_asset_needs_update('bedtools')],
     }
 
@@ -178,13 +140,13 @@ def task_install_perl_libs():
     :return:
     """
     return {
-        'targets': [os.path.join(PERL_LIB_ROOT, 'bin')],
+        'targets': [Path(PERL_LIB_ROOT, 'bin')],
         'task_dep': ['install_perl', 'install_cpanm', 'install_htslib'],
         'actions': [
             # Use the cpan directory we made in download_perl_libs as a cpan mirror and install from there
-            cmd('cpanm -l {perl_lib} --mirror file://%(cpan_mirror_dir)s --installdeps .'.format(
+            cmd('cpanm -l {perl_lib} --mirror file://%(cpan_mirror_dir)s --installdeps Module::Build'.format(
                 perl_lib=PERL_LIB_ROOT),
-                cwd=ROOT),
+                cwd='%(cpan_mirror_dir)'),
             (add_to_manifest, ['perl_libs'])
         ],
         'setup': ['download_perl_libs'],
@@ -194,10 +156,10 @@ def task_install_perl_libs():
 
 
 def task_install_cpanm():
-    target = os.path.join(INSTALL_BIN, 'cpanm')
+    target = Path(INSTALL_BIN, 'cpanm')
 
     def action(cpanm_dir):
-        delete_and_copy(os.path.join(cpanm_dir, 'cpanm'), target)
+        delete_and_copy(Path(cpanm_dir, 'cpanm'), target)
         add_to_manifest('cpanm')
 
     return {
@@ -209,54 +171,41 @@ def task_install_cpanm():
 
 
 def task_install_vep():
-    def action(vep_dir):
-        vep_dir = Path(vep_dir)
-        delete_and_copy(vep_dir, VEP_ROOT)
-        install_binaries([vep_dir / 'vep', vep_dir / 'haplo', vep_dir / 'filter_vep'])
+    def action():
+
+        cmd('conda install -y ensembl-vep={version}'.format(version=VEP_VERSION))
         add_to_manifest('vep')
 
     return {
         'actions': [action],
-        'targets': [VEP_ROOT, VEP_ROOT / 'vep'],
+        'targets': [CONDA_BIN/ 'vep'],
         'uptodate': [not nectar_asset_needs_update('vep')],
-        'setup': ['download_vep'],
-        'getargs': {'vep_dir': ('download_vep', 'dir')},
     }
 
 
 def task_install_fastqc():
-    script_bin = os.path.join(INSTALL_BIN, 'fastqc')
+    script_bin = Path(CONDA_BIN, 'fastqc')
 
-    def action(fastqc_dir):
-        delete_and_copy(fastqc_dir, FASTQC_ROOT)
-
-        # Symlink bin/fastqc to fastqc, deleting the existing symlink if there is one
-        if os.path.exists(script_bin):
-            os.remove(script_bin)
-        os.symlink(os.path.join(FASTQC_ROOT, 'fastqc'), script_bin)
-
-        add_to_manifest('fastqc')
+    def action():
+       cmd('conda install -y fastqc={version}'.format(version=FASTQC_VERSION))
+       add_to_manifest('fastqc')
 
     return {
         'actions': [action],
-        'targets': [script_bin, FASTQC_ROOT],
-        'setup': ['download_fastqc'],
+        'targets': [script_bin],
         'uptodate': [not nectar_asset_needs_update('fastqc')],
-        'getargs': {'fastqc_dir': ('download_fastqc', 'dir')},
     }
 
 def task_install_vcfanno():
 
-    def action(vcfanno_dir):
-        delete_and_copy(Path(vcfanno_dir) / 'vcfanno', INSTALL_BIN)
+    def action():
+        cmd('conda install -y vcfanno={version}'.format(version=VCFANNO_VERSION))
         add_to_manifest('vcfanno')
 
     return {
         'actions': [action],
-        'targets': [INSTALL_BIN / 'vcfanno'],
-        'setup': ['download_vcfanno'],
+        'targets': [CONDA_BIN / 'vcfanno'],
         'uptodate': [not nectar_asset_needs_update('vcfanno')],
-        'getargs': {'vcfanno_dir': ('download_vcfanno', 'dir')},
     }
 
 def task_install_bpipe():
@@ -365,16 +314,14 @@ def task_install_vep_plugins():
 
 
 def task_install_maven():
-    target = MAVEN_ROOT / 'bin' / 'mvn'
+    target = CONDA_BIN / 'mvn'
 
-    def action(maven_dir):
-        delete_and_copy(maven_dir, MAVEN_ROOT)
+    def action():
+        cmd('conda install maven={version}'.format(version=MAVEN_VERSION))
         add_to_manifest('maven')
 
     return {
         'actions': [action],
         'targets': [target],
-        'setup': ['download_maven'],
         'uptodate': [True],
-        'getargs': {'maven_dir': ('download_maven', 'dir')},
     }

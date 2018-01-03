@@ -4,18 +4,13 @@
 set -e
 
 # Set variables
+unset PYTHONPATH
+TOOLNAME="cpipe"
 PYTHON_VERSION='3.6.0'
 PYTHON_INTERPRETER='python3.6'
 ROOT=$(dirname $(readlink -f ${BASH_SOURCE}))
-mkdir -p ${ROOT}/tmpdata
-export TMPDIR=${ROOT}/tmpdata # Write temporary files to tmpdata
-export CPIPE_ROOT=$ROOT
-TEMP_SUBDIR=`mktemp -d`
-SYS_PYTHON=${ROOT}/tools
-SYS_PYBIN=${SYS_PYTHON}/bin
-SYS_INTERPRETER=${SYS_PYBIN}/${PYTHON_INTERPRETER}
-PYTHON=${ROOT}/tools/python
-VENV=${PYTHON}/bin/activate
+SCRIPTPATH=$ROOT
+SCRIPT="$0"
 
 # Printing utilities
 if [[ $- == *i* ]]; then
@@ -58,7 +53,7 @@ TASKS='install'
 CUSTOM_TASKS=''
 CREDENTIALS="${ROOT}/swift_credentials.sh"
 USE_SWIFT=1
-BPIPE_CONF_ARGS=''
+BPIPE_CONF_ARGS='--executor torque --queue batch'
 MODE='auto'
 TARGET_DIR=${ROOT}/cpipex
 
@@ -78,7 +73,8 @@ while true ; do
           USE_PIP=0
           shift 1 ;;
         --usage|--help)
-          usage
+
+            usage
           exit 0;;
         -t|--task)
           CUSTOM_TASKS="${CUSTOM_TASKS} $2"
@@ -102,8 +98,145 @@ while true ; do
     esac
 done
 
+CONTAINING_DIR="$TARGET_DIR"
+TOOLDIR="$TOOLNAME"
+CONDA_ENV_BASENAME="conda-env"
+CONDA_ENV_CACHE="conda-cache"
+MINICONDA_DIR="mc3"
+
+export CONDA_ENV_PATH="$CONTAINING_DIR/$MINICONDA_DIR/envs/$CONDA_ENV_BASENAME"
+CPIPE_PATH="$CONTAINING_DIR"
+MINICONDA_PATH="$CONTAINING_DIR/$MINICONDA_DIR"
+
 mkdir -p ${TARGET_DIR}/tmpdata
 export TMPDIR=${TARGET_DIR}/tmpdata # Write temporary files to tmpdata
+
+
+###### FUNCTIONS ######
+function prepend_miniconda(){
+    if [ -d "$MINICONDA_PATH/bin" ]; then
+        echo "Miniconda installed."
+
+        echo "Prepending miniconda to PATH..."
+        export PATH="$MINICONDA_PATH/bin:$TARGET_DIR/tools/bin:$PATH"
+        hash -r
+
+        # update to the latest conda this way, since the shell script
+        # is often months out of date
+        #if [ -z "$SKIP_CONDA_UPDATE" ]; then
+        #    echo "Updating conda..."
+        #    conda update -y conda
+        #fi
+    else
+        echo "Miniconda directory not found."
+        if [[ $sourced -eq 0 ]]; then
+            exit 1
+        else
+            return 1
+        fi
+    fi
+}
+
+function install_miniconda(){
+    if [ -d "$MINICONDA_PATH/bin" ]; then
+        echo "Miniconda directory exists."
+    else
+        mkdir -p "$MINICONDA_PATH"
+        cd "$(dirname $MINICONDA_PATH)"
+        echo "Downloading and installing Miniconda..."
+
+        if [[ "$(python -c 'import os; print(os.uname()[0])')" == "Darwin" ]]; then
+            miniconda_url=https://repo.continuum.io/miniconda/Miniconda3-latest-MacOSX-x86_64.sh
+        else
+            miniconda_url=https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh
+        fi
+
+        wget -q $miniconda_url -O Miniconda3-latest-x86_64.sh -P $(dirname $MINICONDA_PATH)/
+
+        chmod +x $(dirname $MINICONDA_PATH)/Miniconda3-latest-x86_64.sh
+        $(dirname $MINICONDA_PATH)/Miniconda3-latest-x86_64.sh -b -f -p "$MINICONDA_PATH"
+
+        $MINICONDA_PATH/bin/conda config --append channels bioconda
+        $MINICONDA_PATH/bin/conda config --append channels r
+        $MINICONDA_PATH/bin/conda config --append channels conda-forge
+        # $MINICONDA_PATH/bin/conda install -q -y doit
+
+        rm $(dirname $MINICONDA_PATH)/Miniconda3-latest-x86_64.sh
+    fi
+
+    if [ -d "$MINICONDA_PATH/bin" ]; then
+        prepend_miniconda
+
+    else
+        echo "It looks like the Miniconda installation failed"
+        if [[ $sourced -eq 0 ]]; then
+            exit 1
+        else
+            return 1
+        fi
+    fi
+}
+
+function activate_env(){
+    if [ -d "$SCRIPTPATH/$CONTAINING_DIR" ]; then
+        echo "$TOOLNAME parent directory found"
+    else
+        echo "$TOOLNAME parent directory not found: $SCRIPTPATH/$CONTAINING_DIR not found."
+        echo "Have you run the setup?"
+        echo "Usage: $0 setup"
+        return 1
+    fi
+
+    if [ -d "$CONDA_ENV_PATH" ]; then
+        if [ -z "$CONDA_DEFAULT_ENV" ]; then
+            echo "Activating $TOOLNAME environment..."
+            prepend_miniconda
+            source activate $CONDA_ENV_BASENAME
+            if [[ ! -z $TARGET_DIR ]]; then
+                export PATH="$TARGET_DIR/tools/bin:$PATH"
+            fi
+            # override $PS1 to have a shorter prompt
+            export PS1="($TOOLNAME)\$ "
+        else
+            if [[ "$CONDA_DEFAULT_ENV" != "$CONDA_ENV_PATH" ]]; then
+                echo "It looks like a conda environment is already active,"
+                echo "however it is not the cpipe environment."
+                echo "To use $TOOLNAME with your project, deactivate the"
+                echo "current environment and then source this file."
+                echo "Example: source deactivate && source $(basename $SCRIPT) load"
+            else
+                echo "The $TOOLNAME environment is already active."
+            fi
+            return 0
+        fi
+    else
+        echo "$CONDA_ENV_PATH/ does not exist. Exiting."
+        return 1
+    fi
+}
+
+function setup_env(){
+    mkdir -p $SCRIPTPATH/$CONTAINING_DIR
+    cd $SCRIPTPATH/$CONTAINING_DIR
+
+    install_miniconda
+
+    if [ ! -d "${CONDA_ENV_PATH}" ]; then
+        # provide an option to use Python version in the conda environment
+        conda create -y -p "${CONDA_ENV_PATH}" python=${PYTHON_VERSION} || exit 1
+        # Install pip dependencies
+        if (( USE_PIP )); then
+            pip install --upgrade setuptools pip
+            pip install doit
+            pip install -e ${ROOT}/lib -q
+        fi ;
+    else
+        echo "${CONDA_ENV_PATH}/ already exists. Skipping conda env setup."
+    fi
+    activate_env
+
+}
+###### /FUNCTIONS ######
 
 # If the user specified any tasks, do them instead of install
 if [[ -n $CUSTOM_TASKS ]] ; then
@@ -133,39 +266,7 @@ else
     OUTPUT_STREAM="/dev/null"
 fi
 
-    # Use python-build to install python
-    if [[ ! -f ${VENV} ]]; then
-
-            echo -n 'Installing local python...'
-
-            {
-                pushd ${TEMP_SUBDIR}
-                        git clone --depth 1 git://github.com/yyuu/pyenv.git
-                        pyenv/plugins/python-build/bin/python-build ${PYTHON_VERSION} ${SYS_PYTHON}
-                popd
-
-                # Make a virtual environment
-                ${SYS_INTERPRETER} -m venv ${PYTHON}
-
-                # Delete the temporary files
-                rm -rf ${TEMP_SUBDIR}
-
-            } > ${OUTPUT_STREAM}
-
-    fi
-
-    {
-        # Load virtualenv
-        source ${ROOT}/_env
-
-        # Install pip dependencies
-        if (( USE_PIP )); then
-            pip install --upgrade setuptools pip
-            pip install -e ${ROOT}/lib -q
-        fi ;
-
-    } > ${OUTPUT_STREAM}
-
+   setup_env
    if [[ "x$ROOT" != "x$TARGET_DIR" ]]; then
    cp -a $ROOT/{batches,pipeline,designs,cpipe,_env,build.gradle,version.txt} $TARGET_DIR/
    fi

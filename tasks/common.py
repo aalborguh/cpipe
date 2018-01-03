@@ -22,18 +22,23 @@ TOOLS_ROOT = ROOT / 'tools'
 DATA_ROOT = ROOT / 'data'
 TMPDATA = ROOT / 'tmpdata'
 
+for p in (TOOLS_ROOT, DATA_ROOT, TMPDATA):
+        p.mkdir(parents=True,  exist_ok = True)
+
 # Versions
 # Note: The version of most other Java/Perl/Python libraries can be found in the relevant dependency file (cpanfile, build.gradle, etc)
 BWA_VERSION = '0.7.13'
+SAMTOOLS_VERSION = '1.3'
+BCFTOOLS_VERSION = '1.3'
 BPIPE_VERSION = '0.9.9.4'
-HTSLIB_VERSION = '1.3'  # Samtools and Bcftools also use this
+HTSLIB_VERSION = SAMTOOLS_VERSION  # Samtools and Bcftools also use this
 BEDTOOLS_VERSION = '2.25.0'
 GATK_VERSION = '3.6'
 PICARD_VERSION = '2.9.0'
 VEP_VERSION = '88.8'
 PYTHON_VERSION = '2.7.12'
 PERL_VERSION = '5.24.0'
-R_VERSION = '3.3.1'
+R_VERSION = '3.4.1'
 GROOVY_VERSION = '2.4.7'
 FASTQC_VERSION = '0.11.5'
 DBNSFP_VERSION = '2.9.1'  # Use the latest v2 version. v3 of dbNSFP uses HG38
@@ -63,6 +68,7 @@ def get_gradle_version(repo: str):
 
 
 # Tool paths
+CONDA_BIN = Path(os.getenv('CONDA_ENV_PATH', ROOT)) / 'bin'
 INSTALL_ROOT = TOOLS_ROOT
 INSTALL_BIN = INSTALL_ROOT / 'bin'
 INSTALL_LIB = INSTALL_ROOT / 'lib'

@@ -5,27 +5,27 @@ from doit.tools import create_folder
 import pymysql
 from tasks.nectar.nectar_util import *
 from doit.tools import run_once
-from os import path
+from pathlib import Path
 
 VEP_CACHE = DATA_ROOT / 'vep_cache'
 
 def download_ftp_list(ftp, files, target_dir, file_prefix=''):
     for file in files:
-        output = os.path.join(target_dir, file)
+        output = Path(target_dir, file)
 
         if not path.isfile(output):
             ftp.retrbinary(
-                'RETR {}'.format(os.path.join(file_prefix, file)),
+                'RETR {}'.format(Path(file_prefix, file)),
                 open(output, 'wb').write
             )
 
 
 def task_download_dbnsfp():
-    targets = [os.path.join(DATA_ROOT, 'dbnsfp', 'dbNSFP.gz')]
+    targets = [Path(DATA_ROOT, 'dbnsfp', 'dbNSFP.gz')]
     if swift_install():
         return nectar_install('dbnsfp', {'targets': targets})
     else:
-        DBNSFP_ROOT = os.path.join(DATA_ROOT, 'dbnsfp')
+        DBNSFP_ROOT = Path(DATA_ROOT, 'dbnsfp')
 
         return {
             'targets': targets,
@@ -66,24 +66,25 @@ def task_install_vep_cache():
 
 def converted_cache_exists():
     """Returns the path to a key target file in the converted cache, if it exists"""
-    vep_glob = VEP_CACHE.glob('homo_sapiens_refseq/*/1/all_vars.gz.tbi')
+    vep_glob = VEP_CACHE.glob('**/1/all_vars.gz.tbi')
     if vep_glob:
-        return Path(next(vep_glob)).exists()
+        return len(list(vep_glob))  > 0
     else:
         return False
 
 def unconverted_cache_exists():
     """Returns the path to a key target file in the unconverted cache, if it exists"""
-    vep_glob = VEP_CACHE.glob('homo_sapiens_refseq/*/1/100000001-101000000.gz')
+    vep_glob = VEP_CACHE.glob('**/1/100000001-101000000.gz')
     if vep_glob:
-        return Path(vep_glob[0]).exists()
+        return len(list(vep_glob))  > 0
     else:
         return False
 
 def task_convert_vep_cache():
     return {
         'actions': [
-            f'perl {VEP_ROOT / "convert_cache.pl"} -dir {VEP_CACHE} -species homo_sapiens_refseq --remove'
+            cmd('vep_convert_cache -dir {vep_cache} -species homo_sapiens_refseq --remove'.format(vep_root=VEP_ROOT,
+                                                                                                                 vep_cache=VEP_CACHE))
         ],
         'task_dep': [
             'download_vep_cache'
@@ -92,9 +93,9 @@ def task_convert_vep_cache():
     }
 
 def task_download_vep_cache():
+    VEP_CACHE.mkdir(parents = True, exist_ok = True)
     return {
         'actions': [
-            lambda: create_folder(VEP_CACHE),
             '''perl {tools_dir}/vep/INSTALL.pl\
             --NO_HTSLIB\
             --CACHEDIR {cache}\
@@ -110,7 +111,7 @@ def task_download_vep_cache():
         'uptodate': [lambda: converted_cache_exists() or unconverted_cache_exists()],
     }
 
-UCSC_ROOT = os.path.join(DATA_ROOT, 'ucsc')
+UCSC_ROOT = Path(DATA_ROOT, 'ucsc')
 def task_obtain_ucsc():
     if swift_install():
         return nectar_install('ucsc', {'targets': [UCSC_ROOT]})#, UCSC_SAMTOOLS_INDEX, UCSC_BWA_INDEX]})
@@ -122,12 +123,15 @@ def task_obtain_ucsc():
         }
 
 def task_download_ucsc():
-        return {
+    UCSC_ROOT.mkdir(parents = True, exist_ok = True)
+    ucsc_files = ["ucsc.hg19.dict.gz", "ucsc.hg19.fasta.gz", "ucsc.hg19.fasta.fai.gz"]
+    targets = [(UCSC_ROOT / file).with_suffix('') for file in ucsc_files]
+    return {
             'actions': [
                 lambda: download_ftp_list(
                     FTP("ftp.broadinstitute.org",
                         user="gsapubftp-anonymous"),
-                    ["ucsc.hg19.dict.gz", "ucsc.hg19.fasta.gz", "ucsc.hg19.fasta.fai.gz"],
+                    ucsc_files,
                     UCSC_ROOT,
                     'bundle/hg19/'
                 ),
@@ -141,11 +145,12 @@ def task_download_ucsc():
 
             ],
             'uptodate': [run_once],
-        }
+     }
 
 
 def task_download_mills_and_1000g():
     MILLS_ROOT = DATA_ROOT / 'mills_and_1000g'
+    MILLS_ROOT.mkdir(parents=True, exist_ok=True)
     mills_files = ["Mills_and_1000G_gold_standard.indels.hg19.sites.vcf.gz", "Mills_and_1000G_gold_standard.indels.hg19.sites.vcf.idx.gz"]
     targets = [(MILLS_ROOT / file).with_suffix('') for file in mills_files]
 
@@ -172,23 +177,28 @@ def task_download_mills_and_1000g():
         }
 
 def task_download_dbsnp():
-    DBSNP_ROOT = os.path.join(DATA_ROOT, 'dbsnp')
-    dbsnp_files = ["dbsnp_138.hg19.vcf", "dbsnp_138.hg19.vcf.idx"]
-    targets = [os.path.join(DBSNP_ROOT, file) for file in dbsnp_files]
+    DBSNP_ROOT = Path(DATA_ROOT, 'dbsnp')
+    DBSNP_ROOT.mkdir(parents=True, exist_ok=True)
+    dbsnp_files = ["dbsnp_138.hg19.vcf.gz", "dbsnp_138.hg19.vcf.idx.gz"]
+    targets = [Path(DBSNP_ROOT, file).with_suffix('') for file in dbsnp_files]
 
     if swift_install():
         return nectar_install('dbsnp', {'targets': targets})
     else:
-        return {
-            'targets': targets,
-            'actions': [
-                lambda: download_ftp_list(
+        def action():
+                download_ftp_list(
                     FTP("ftp.broadinstitute.org",
                         user="gsapubftp-anonymous"),
                     dbsnp_files,
                     DBSNP_ROOT,
                     'bundle/hg19/'
                 )
+
+        return {
+            'targets': targets,
+            'actions': [
+                action,
+                f'gunzip {DBSNP_ROOT}/*.gz --force'
             ],
             'uptodate': [run_once],
         }
@@ -216,7 +226,7 @@ def task_convert_trio_refinement():
         'actions': [
             cmd(
                 '''
-                 java -jar $TOOLS_ROOT/picard/picard.jar LiftoverVcf \
+                 java -jar {tools}/picard/picard.jar LiftoverVcf \
                         I={data_dir}/1000G_phase3/1000G_phase3_v4_20130502.sites.vcf \
                         O={data_dir}/1000G_phase3/1000G_phase3_v4_20130502.sites.hg19.vcf \
                         CHAIN={data_dir}/1000G_phase3/b37tohg19.chain \
@@ -226,7 +236,7 @@ def task_convert_trio_refinement():
                     && tabix -p vcf {data_dir}/1000G_phase3/1000G_phase3_v4_20130502.sites.hg19.vcf.gz
 
                 bash -O extglob -c "rm -rf {data_dir}/1000G_phase3/!(1000G_phase3_v4_20130502.sites.hg19.vcf.gz*)"
-                '''.format(data_dir=DATA_ROOT),
+                '''.format(tools=JAVA_LIBS_ROOT, data_dir=DATA_ROOT),
                 executable='bash'
             ),
             ''.format(DATA_ROOT)
@@ -254,7 +264,7 @@ def task_download_trio_refinement():
                  | gunzip > {data_dir}/1000G_phase3/1000G_phase3_v4_20130502.sites.vcf
             '''.format(data_dir=DATA_ROOT)
         ],
-        #'targets': [RAW_VCF],
+        'targets': [RAW_VCF],
         # The task is up to date if the final refinement file exists or if just this step's product exists
         'uptodate': [lambda: os.path.exists(TRIO_REFINEMENT_FILE) or os.path.exists(RAW_VCF)]
     }
@@ -272,14 +282,14 @@ def task_download_refinement_liftover():
                      ftp://gsapubftp-anonymous@ftp.broadinstitute.org/Liftover_Chain_Files/b37tohg19.chain
             '''.format(data_dir=DATA_ROOT)
         ],
-        #'targets': [LIFTOVER_FILE],
+        'targets': [LIFTOVER_FILE],
         # The task is up to date if the final refinement file exists or if just this step's product exists
         'uptodate': [lambda: os.path.exists(TRIO_REFINEMENT_FILE) or os.path.exists(LIFTOVER_FILE)]
     }
 
 
-CHROMOSOME_DIR = os.path.join(DATA_ROOT, 'chromosomes')
-CHROMOSOME_FILE = os.path.join(CHROMOSOME_DIR, 'hg19.genome')
+CHROMOSOME_DIR = Path(DATA_ROOT, 'chromosomes')
+CHROMOSOME_FILE = Path(CHROMOSOME_DIR, 'hg19.genome')
 
 def task_download_chromosome_sizes():
     targets = [CHROMOSOME_DIR, CHROMOSOME_FILE]
@@ -319,7 +329,7 @@ def task_bwa_index_ucsc_reference():
     return {
         'targets': [UCSC_BWA_INDEX],
         'actions': [
-            '{tools}/bin/bwa index -a bwtsw {data}/ucsc/ucsc.hg19.fasta'.format(tools=TOOLS_ROOT, data=DATA_ROOT)
+            '{tools}/bwa index -a bwtsw {data}/ucsc/ucsc.hg19.fasta'.format(tools=CONDA_BIN, data=DATA_ROOT)
         ],
         'task_dep': [
             'install_bwa',
@@ -335,7 +345,7 @@ def task_samtools_index_ucsc_reference():
     return {
         'targets': [UCSC_SAMTOOLS_INDEX],
         'actions': [
-            '{tools}/samtools/samtools faidx {data}/ucsc/ucsc.hg19.fasta'.format(tools=TOOLS_ROOT, data=DATA_ROOT)
+            '{tools}/samtools faidx {data}/ucsc/ucsc.hg19.fasta'.format(tools=CONDA_BIN, data=DATA_ROOT)
         ],
         'task_dep': [
             'install_samtools',
@@ -346,7 +356,7 @@ def task_samtools_index_ucsc_reference():
     }
 
 def task_download_vcfanno_data():
-    VCFANNO_DIR = os.path.join(DATA_ROOT, 'annotation')
+    VCFANNO_DIR = Path(DATA_ROOT, 'annotation')
     if manual_install() or not has_swift_auth():
         return {'actions': [lambda: print("This asset can only be installed using the nectar object store")]}
     else:

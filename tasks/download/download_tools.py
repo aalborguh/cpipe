@@ -243,8 +243,10 @@ def task_download_vep_libs():
     else:
         def action():
             temp_dir = tempfile.mkdtemp()
-            sh('perl {vep_dir}/INSTALL.pl --NO_HTSLIB --NO_TEST --AUTO a --DESTDIR {vep_libs}'.format(vep_dir=VEP_ROOT,
-                                                                                            vep_libs=temp_dir))
+            sh(
+                'perl {vep_dir}/INSTALL.pl --VERSION {version} --NO_HTSLIB --NO_TEST --AUTO a --DESTDIR {vep_libs}'.format(version=int(float(VEP_VERSION)),
+                                                                                                                          vep_dir=VEP_ROOT,
+                                                                                                                          vep_libs=temp_dir))
             return {'dir': temp_dir}
         return {
             'task_dep': ['copy_config', 'install_perl_libs', 'install_perl', 'install_vep'],
@@ -290,51 +292,51 @@ def task_download_java_libs():
         }
 
 
-def task_download_c_libs():
-    return {
-        'actions': None,
-        'task_dep': ['download_bzip2', 'download_xz', 'download_pcre', 'download_libcurl', 'download_zlib']
-    }
+# def task_download_c_libs():
+#     return {
+#         'actions': None,
+#         'task_dep': ['download_bzip2', 'download_xz', 'download_pcre', 'download_libcurl', 'download_zlib']
+#     }
 
 
-def task_download_bzip2():
-    if swift_install():
-        return nectar_download('bzip2')
-    else:
-        return download_task(
-            'http://www.bzip.org/{0}/bzip2-{0}.tar.gz'.format(BZIP_VERSION))
+# def task_download_bzip2():
+#     if swift_install():
+#         return nectar_download('bzip2')
+#     else:
+#         return download_task(
+#             'http://www.bzip.org/{0}/bzip2-{0}.tar.gz'.format(BZIP_VERSION))
 
 
-def task_download_xz():
-    if swift_install():
-        return nectar_download('xz')
-    else:
-        return download_task(
-            'http://tukaani.org/xz/xz-{}.tar.gz'.format(XZ_VERSION))
+# def task_download_xz():
+#     if swift_install():
+#         return nectar_download('xz')
+#     else:
+#         return download_task(
+#             'http://tukaani.org/xz/xz-{}.tar.gz'.format(XZ_VERSION))
 
 
-def task_download_pcre():
-    if swift_install():
-        return nectar_download('pcre')
-    else:
-        return download_task(
-            'ftp://ftp.csx.cam.ac.uk/pub/software/programming/pcre/pcre-{}.tar.gz'.format(PCRE_VERSION))
+# def task_download_pcre():
+#     if swift_install():
+#         return nectar_download('pcre')
+#     else:
+#         return download_task(
+#             'ftp://ftp.csx.cam.ac.uk/pub/software/programming/pcre/pcre-{}.tar.gz'.format(PCRE_VERSION))
 
 
-def task_download_libcurl():
-    if swift_install():
-        return nectar_download('libcurl')
-    else:
-        return download_task(
-            'https://curl.haxx.se/download/curl-{}.tar.gz'.format(LIBCURL_VERSION))
+# def task_download_libcurl():
+#     if swift_install():
+#         return nectar_download('libcurl')
+#     else:
+#         return download_task(
+#             'https://curl.haxx.se/download/curl-{}.tar.gz'.format(LIBCURL_VERSION))
 
 
-def task_download_zlib():
-    if swift_install():
-        return nectar_download('zlib')
-    else:
-        return download_task(
-            'https://codeload.github.com/madler/zlib/tar.gz/v{}'.format(ZLIB_VERSION), type='tgz')
+# def task_download_zlib():
+#     if swift_install():
+#         return nectar_download('zlib')
+#     else:
+#         return download_task(
+#             'https://codeload.github.com/madler/zlib/tar.gz/v{}'.format(ZLIB_VERSION), type='tgz')
 
 def task_download_vcfanno():
     if has_swift_auth():
