@@ -190,5 +190,12 @@
         "hash": "0efa6158511eec7940096db011d3e3c79440b9bb",
         "container": "https://swift.rc.nectar.org.au:8888/v1/AUTH_7ea859948c3a451c9baced6fee813ed1/cpipe-2.4-public/",
         "version": "4b5d3b1"
+    },
+    "maven": {
+        "path": "tools/maven",
+        "hash": "unknow",
+        "container": "unknown",
+        "version": "3.9.3"
     }
+
 }
