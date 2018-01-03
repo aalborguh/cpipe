@@ -48,7 +48,7 @@ function usage {
 }
 
 # Parse arguments
-ARGS=$(getopt -o visc:n:t:p: --long "verbose,noninteractive,no-swift,help,usage,credentials:,processes:,task:,no-pip:" -n $(basename $0) -- "$@")
+ARGS=$(getopt -o visc:n:t:p:d: --long "verbose,noninteractive,no-swift,help,usage,credentials:,processes:,task:,no-pip:target-dir" -n $(basename $0) -- "$@")
 eval set -- "$ARGS"
 
 PROCESSES=`nproc --all`
@@ -60,6 +60,7 @@ CREDENTIALS="${ROOT}/swift_credentials.sh"
 USE_SWIFT=1
 BPIPE_CONF_ARGS=''
 MODE='auto'
+TARGET_DIR=${ROOT}/cpipex
 
 while true ; do
     case "$1" in
@@ -88,6 +89,10 @@ while true ; do
         -s|--no-swift)
           USE_SWIFT=0
           shift 1;;
+        -d|--target-dir)
+            export TARGET_DIR=$2
+            export CPIPE_ROOT=$TARGET_DIR
+            shift 2;;
         --)
           break ;;
         *)
@@ -96,6 +101,9 @@ while true ; do
           exit 1 ;;
     esac
 done
+
+mkdir -p ${TARGET_DIR}/tmpdata
+export TMPDIR=${TARGET_DIR}/tmpdata # Write temporary files to tmpdata
 
 # If the user specified any tasks, do them instead of install
 if [[ -n $CUSTOM_TASKS ]] ; then
@@ -158,10 +166,13 @@ fi
 
     } > ${OUTPUT_STREAM}
 
+   if [[ "x$ROOT" != "x$TARGET_DIR" ]]; then
+   cp -a $ROOT/{batches,pipeline,designs,cpipe,_env,build.gradle,version.txt} $TARGET_DIR/
+   fi
 # Run the interactive scripts first
-if [[ ! -f ${ROOT}/pipeline/bpipe.config ]] ; then
+if [[ ! -f ${TARGET_DIR}/pipeline/bpipe.config ]] ; then
     create_bpipe_config ${BPIPE_CONF_ARGS}
 fi
 
 # Now run the full install, which is all automated
-doit -n $PROCESSES --verbosity $VERBOSITY $TASKS mode=${MODE}
+doit -d $TARGET_DIR -f $ROOT/dodo.py -n $PROCESSES --verbosity $VERBOSITY $TASKS mode=${MODE}

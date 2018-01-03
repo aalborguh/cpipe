@@ -17,7 +17,7 @@ from zipfile import ZipFile
 
 # General paths
 HERE = Path(__file__).parent  # The cpipe root directory
-ROOT = HERE.parent.resolve()
+ROOT = Path(os.getenv('TARGET_DIR', HERE.parent))
 TOOLS_ROOT = ROOT / 'tools'
 DATA_ROOT = ROOT / 'data'
 TMPDATA = ROOT / 'tmpdata'
