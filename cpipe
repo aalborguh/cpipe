@@ -1,7 +1,7 @@
 #!/bin/bash
 
 REMAINDER="${@:1}"
-ROOT=`dirname $0`
+ROOT=$(dirname $(readlink -f $0))
 ENV_SCRIPT="$ROOT/_env"
 
 if [[ -n $REMAINDER ]]; then
