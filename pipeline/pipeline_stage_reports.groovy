@@ -52,7 +52,7 @@ calc_coverage_stats = {
 
           sort -k 1,1 -k2,2n < $EXOME_TARGET > "$safe_tmp_dir/exome.bed"
 
-          samtools view -b -q $EXOME_MAPQ $input.recal.bam | $BEDTOOLS/bin/bedtools bamtobed -i stdin | sort -k 1,1 -k2,2n > "$safe_tmp_dir/bam.bed"
+          samtools view -b -q $EXOME_MAPQ $input.recal.bam | bedtools bamtobed -i stdin | sort -k 1,1 -k2,2n > "$safe_tmp_dir/bam.bed"
 
           coverageBed -d -sorted -a "$safe_tmp_dir/exome.bed" -b "$safe_tmp_dir/bam.bed" | gzip > $output2.exome.gz
         
@@ -409,16 +409,16 @@ filtered_on_exons = {
        produce("${run_id}_${branch.name}.filtered_on_exons.bam", "${run_id}_${branch.name}.filtered_on_exons.bam.bai") {
            exec """
                filter_bed --include $BASE/designs/genelists/incidentalome.genes.txt < $BED_FILE |
-               $BEDTOOLS/bin/bedtools slop -g $HG19_CHROM_INFO -b $GENE_BAM_PADDING -i - > $safe_tmp 
+               bedtools slop -g $HG19_CHROM_INFO -b $GENE_BAM_PADDING -i - > $safe_tmp
             
                filter_bed --exclude $BASE/designs/genelists/incidentalome.genes.txt < $BED_FILE |
-               $BEDTOOLS/bin/bedtools slop -g $HG19_CHROM_INFO -b $GENE_BAM_PADDING -i - | 
-               $BEDTOOLS/bin/bedtools subtract -a - -b $safe_tmp | 
+               bedtools slop -g $HG19_CHROM_INFO -b $GENE_BAM_PADDING -i - |
+               bedtools subtract -a - -b $safe_tmp |
                sort -k1,1 -k2,2n |
-               $BEDTOOLS/bin/bedtools intersect -a $input.recal.bam -b stdin |
-               $SAMTOOLS/samtools view -h -b - > $output.bam
+               bedtools intersect -a $input.recal.bam -b stdin |
+               samtools view -h -b - > $output.bam
     
-               $SAMTOOLS/samtools index $output.bam
+               samtools index $output.bam
 
                rm "$safe_tmp"
            """, "filtered_on_exons"

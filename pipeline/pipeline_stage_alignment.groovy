@@ -176,7 +176,7 @@ align_bwa = {
                     bwa mem -M -t $threads -k $seed_length
                              -R "@RG\\tID:${sample}_${lane}\\tPL:$PLATFORM\\tPU:1\\tLB:${sample_info[sample].library}\\tSM:${sample}"  
                              $REF $input1.gz $input2.gz | 
-                             $SAMTOOLS/samtools view -F 0x100 -bSu - | $SAMTOOLS/samtools sort -o ${output.prefix}.bam -T "$safe_tmp_dir/bamsort"
+                             samtools view -F 0x100 -bSu - | samtools sort -o ${output.prefix}.bam -T "$safe_tmp_dir/bamsort"
     
                     rm -r "$safe_tmp_dir"
             ""","bwamem"

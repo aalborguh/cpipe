@@ -20,7 +20,7 @@ slop_bed = {
 
 extract_regions = {
     exec """
-        $SAMTOOLS/samtools view -b $input.bam -L $input.bed > $output.bam
+        samtools view -b $input.bam -L $input.bed > $output.bam
      """
 }
 
@@ -32,7 +32,7 @@ add_variants = {
 
         cut -f 1,2,3,4,5 $VARIANT_BED | $PYTHON $BAMSURGEON/addsnv.py -v /dev/stdin --bamfile $input.bam -r $REF -o ${output.bam.prefix}.tmp.bam
        
-        $SAMTOOLS/samtools sort ${output.bam.prefix}.tmp.bam $output.bam.prefix
+        samtools sort ${output.bam.prefix}.tmp.bam $output.bam.prefix
         
         rm -rf *_logs_*.bam
     """
@@ -45,7 +45,7 @@ sam_to_fastq = {
 
     from(extract_region) transform(".bam") to("_R1.fastq.gz", "_R2.fastq.gz") {
         exec """
-            $SAMTOOLS/samtools view -b $input.bam -L $input.bed |
+            samtools view -b $input.bam -L $input.bed |
             java -Xmx2g -jar $PICARD_HOME/lib/SamToFastq.jar
                     TMP_DIR=$TMP_DIR
                     I=/dev/stdin
