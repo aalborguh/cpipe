@@ -272,7 +272,7 @@ def task_download_trio_refinement():
 
 
 def task_download_refinement_liftover():
-    LIFTOVER_FILE = '{}/b37tohg19.chain'.format(DATA_ROOT)
+    LIFTOVER_FILE = '{}/1000G_phase3/b37tohg19.chain'.format(DATA_ROOT)
 
     return {
         'actions': [
