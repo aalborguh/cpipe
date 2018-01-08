@@ -213,7 +213,7 @@ def task_obtain_trio_refinement():
         return {
             'actions': None,
             'task_dep': ['convert_trio_refinement'],
-            'targets': [TRIO_REFINEMENT_FILE],
+            'targets': ["{}.tbi".format(TRIO_REFINEMENT_FILE)],
         }
 
 def task_convert_trio_refinement():
@@ -247,7 +247,8 @@ def task_convert_trio_refinement():
             'install_htslib',
             'copy_config'
         ],
-        'uptodate': [run_once]
+        'uptodate': [run_once],
+        'targets': [TRIO_REFINEMENT_FILE]
     }
 
 
@@ -264,9 +265,9 @@ def task_download_trio_refinement():
                  | gunzip > {data_dir}/1000G_phase3/1000G_phase3_v4_20130502.sites.vcf
             '''.format(data_dir=DATA_ROOT)
         ],
-        'targets': [RAW_VCF],
         # The task is up to date if the final refinement file exists or if just this step's product exists
-        'uptodate': [lambda: os.path.exists(TRIO_REFINEMENT_FILE) or os.path.exists(RAW_VCF)]
+        'uptodate': [lambda: os.path.exists(TRIO_REFINEMENT_FILE) or os.path.exists(RAW_VCF)],
+        'targets': [RAW_VCF]
     }
 
 
