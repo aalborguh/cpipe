@@ -76,6 +76,9 @@ PLATFORM="illumina"
 // The coverage level below which a sample should be failed
 MEDIAN_COVERAGE_THRESHOLD=0
 
+// Location of executables used by the pipeline
+EXEDIR="$BASE/mc3/envs/conda-env/bin"
+
 // Base location of all the tools that we use
 TOOLS="$BASE/tools"
 
@@ -109,14 +112,14 @@ GATK_VARIANT_ONLY=false
 EXCEL="$TOOLS/excel"
 
 // Location of Bedtools distribution
-BEDTOOLS="$TOOLS"
+BEDTOOLS="$EXEDIR/bedtools"
 
 // Location of Samtools
-BCFTOOLS="$TOOLS/bin"
-SAMTOOLS="$TOOLS/bin"
+BCFTOOLS="$EXEDIR/bcftools"
+SAMTOOLS="$EXEDIR/samtools"
 
 // FastQC tool
-FASTQC="$TOOLS/fastqc"
+FASTQC="$EXEDIR/fastqc"
 
 // Utilties for processing NGS data in Java/Groovy
 GROOVY_NGS="$TOOLS/java_libs"
@@ -126,7 +129,7 @@ GROOVY_NGS="$TOOLS/java_libs"
 // (you can create a symlink to an existing directory with 
 // that name if desired).
 // See tools/vep/README for more information
-VEP_VERSION="83"
+VEP_VERSION="88"
 VEP="$TOOLS/vep"
 
 VEP_CACHE="$DATA/vep_cache"
@@ -137,7 +140,7 @@ IGVTOOLS="$TOOLS/IGVTools"
 IGV="$TOOLS/tools/igv"
 
 // Location and version of BWA
-BWA="$TOOLS/bin/bwa"
+BWA="$EXEDIR/bwa"
 BWA_THREADS="5"
 
 CONDEL="$TOOLS/vep_plugins/config/Condel"

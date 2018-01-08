@@ -39,7 +39,7 @@ vcf_normalize = {
     produce ("${sample}.${analysis}.genotype.norm.vcf") {
         from("variants/${sample}.${analysis}.refined.vcf") {
             exec """
-                bcftools norm -m -both $input.refined.vcf | $BCFTOOLS/bcftools norm -f $REF - -o $output
+                bcftools norm -m -both $input.refined.vcf | bcftools norm -f $REF - -o $output
             """, "vcf_normalize"
         }
     }
