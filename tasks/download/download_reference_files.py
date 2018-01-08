@@ -226,7 +226,7 @@ def task_convert_trio_refinement():
         'actions': [
             cmd(
                 '''
-                 java -jar {tools}/picard/picard.jar LiftoverVcf \
+                 java -jar {javalibs}/picard.jar LiftoverVcf \
                         I={data_dir}/1000G_phase3/1000G_phase3_v4_20130502.sites.vcf \
                         O={data_dir}/1000G_phase3/1000G_phase3_v4_20130502.sites.hg19.vcf \
                         CHAIN={data_dir}/1000G_phase3/b37tohg19.chain \
@@ -236,7 +236,7 @@ def task_convert_trio_refinement():
                     && tabix -p vcf {data_dir}/1000G_phase3/1000G_phase3_v4_20130502.sites.hg19.vcf.gz
 
                 bash -O extglob -c "rm -rf {data_dir}/1000G_phase3/!(1000G_phase3_v4_20130502.sites.hg19.vcf.gz*)"
-                '''.format(tools=JAVA_LIBS_ROOT, data_dir=DATA_ROOT),
+                '''.format(javalibs=JAVA_LIBS_ROOT, data_dir=DATA_ROOT),
                 executable='bash'
             ),
             ''.format(DATA_ROOT)
