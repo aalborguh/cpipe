@@ -50,6 +50,8 @@ PCRE_VERSION = '8.39'
 LIBCURL_VERSION = '7.50.3'
 ZLIB_VERSION = '1.2.8'
 VCFANNO_VERSION = '0.1.0'
+EXACFILE='ExAC.r1.sites.vep.vcf.gz' # This name must match the file name in the EXACLINK
+EXACLINK='ftp://anonymous@ftp.broadinstitute.org/pub/ExAC_release/release1/ExAC.r1.sites.vep.vcf.gz'
 
 
 def get_gradle_version(repo: str):

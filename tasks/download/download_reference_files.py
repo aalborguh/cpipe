@@ -358,6 +358,21 @@ def task_samtools_index_ucsc_reference():
 def task_download_vcfanno_data():
     VCFANNO_DIR = Path(DATA_ROOT, 'annotation')
     if manual_install() or not has_swift_auth():
-        return {'actions': [lambda: print("This asset can only be installed using the nectar object store")]}
+
+        return {
+            'actions': [
+                '''
+               wget \
+                        --user gsapubftp-anonymous:cpipe.user@cpipeline.org \
+                         -P {annotation_dir} \
+                         {exaclink};\
+                tabix -p vcf {exacfile}
+                '''.format(annotation_dir=VCFANNO_DIR, exaclink=EXACLINK,exacfile=VCFANNO_DIR/EXACFILE)
+            ],
+            'targets': [VCFANNO_DIR/EXACFILE],
+            # The task is up to date if the final refinement file exists or if just this step's product exists
+            'uptodate': [os.path.exists(VCFANNO_DIR/EXACFILE)]
+        }
+
     else:
         return nectar_install('annotation', {'targets': [VCFANNO_DIR]})
