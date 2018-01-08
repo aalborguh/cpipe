@@ -16,7 +16,7 @@ setup(
     name="Cpipe",
     version="2.5",
     packages=find_packages(),
-    package_data={'cpipe.test': 'data/*'},
+    package_data={'cpipe.test': ['data/*']},
 
     # Copy the non-python scripts to the python bin directory, allowing them to be used from any directory
     scripts=scripts,
