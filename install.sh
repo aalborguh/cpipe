@@ -269,7 +269,13 @@ fi
    setup_env
    if [[ "x$ROOT" != "x$TARGET_DIR" ]]; then
    cp -a $ROOT/{batches,pipeline,designs,cpipe,_env,build.gradle,version.txt} $TARGET_DIR/
+   cp -a $ROOT/tools/vep_plugins/* $TARGET_DIR/tools/vep_plugins/
    fi
+   if (( USE_PIP )); then
+       pip install --upgrade setuptools pip
+       pip install -e ${ROOT}/lib -q
+   fi ;
+
 # Run the interactive scripts first
 if [[ ! -f ${TARGET_DIR}/pipeline/bpipe.config ]] ; then
     create_bpipe_config ${BPIPE_CONF_ARGS}
