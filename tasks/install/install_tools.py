@@ -134,52 +134,19 @@ def task_install_gatk():
         }
 
 
-def task_install_perl_libs():
-    """
-    Installs all cpan libs from the cpan directory into the perl_lib directory
-    :return:
-    """
-    return {
-        'targets': [Path(PERL_LIB_ROOT, 'bin')],
-        'task_dep': ['install_perl', 'install_cpanm', 'install_htslib'],
-        'actions': [
-            # Use the cpan directory we made in download_perl_libs as a cpan mirror and install from there
-            cmd('cpanm -l {perl_lib} --mirror file://%(cpan_mirror_dir)s --installdeps Module::Build'.format(
-                perl_lib=PERL_LIB_ROOT),
-                cwd='%(cpan_mirror_dir)'),
-            (add_to_manifest, ['perl_libs'])
-        ],
-        'setup': ['download_perl_libs'],
-        'getargs': {'cpan_mirror_dir': ('download_perl_libs', 'dir')},
-        'uptodate': [not nectar_asset_needs_update('perl_libs')],
-    }
-
-
-def task_install_cpanm():
-    target = Path(INSTALL_BIN, 'cpanm')
-
-    def action(cpanm_dir):
-        delete_and_copy(Path(cpanm_dir, 'cpanm'), target)
-        add_to_manifest('cpanm')
-
-    return {
-        'actions': [action],
-        'uptodate': [not nectar_asset_needs_update('cpanm')],
-        'setup': ['download_cpanm'],
-        'getargs': {'cpanm_dir': ('download_cpanm', 'dir')}
-    }
-
-
 def task_install_vep():
     def action():
 
-        cmd('conda install -y ensembl-vep={version}'.format(version=VEP_VERSION))
+        cmd("""
+        conda search ensembl-vep
+        conda install -y ensembl-vep={version}
+        """.format(version=VEP_VERSION))
         add_to_manifest('vep')
 
     return {
         'actions': [action],
-        'targets': [CONDA_BIN/ 'vep'],
-        'uptodate': [not nectar_asset_needs_update('vep')],
+        'targets': [CONDA_BIN/ 'vep_install'],
+        # 'uptodate': [not nectar_asset_needs_update('vep')],
     }
 
 
@@ -241,13 +208,12 @@ def task_install_picard():
 
 def task_install_groovy():
     groovy_target = INSTALL_BIN / 'groovy'
-
+    groovy_bin = GROOVY_ROOT / 'bin'
     def action(groovy_dir):
         # Make the groovy directory
         delete_and_copy(groovy_dir, GROOVY_ROOT)
 
         # Symlink all binaries to this directory
-        groovy_bin = GROOVY_ROOT / 'bin'
         for bin_file in os.listdir(groovy_bin):
             bin_target = groovy_bin / bin_file
             symlink = INSTALL_BIN / bin_file
@@ -260,7 +226,7 @@ def task_install_groovy():
         'actions': [action],
         'targets': [groovy_target, GROOVY_ROOT],
         'uptodate': [not nectar_asset_needs_update('groovy')],
-        'setup': ['download_groovy'],
+        'task_dep': ['download_groovy'],
         'getargs': {'groovy_dir': ('download_groovy', 'dir')},
     }
 
@@ -317,7 +283,7 @@ def task_install_maven():
     target = CONDA_BIN / 'mvn'
 
     def action():
-        cmd('conda install maven={version}'.format(version=MAVEN_VERSION))
+        cmd('conda install -y maven={version}'.format(version=MAVEN_VERSION))
         add_to_manifest('maven')
 
     return {

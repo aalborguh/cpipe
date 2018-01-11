@@ -96,16 +96,15 @@ def task_download_vep_cache():
     VEP_CACHE.mkdir(parents = True, exist_ok = True)
     return {
         'actions': [
-            '''perl {tools_dir}/vep/INSTALL.pl\
+            '''vep_install \
             --NO_HTSLIB\
             --CACHEDIR {cache}\
             --AUTO cf\
             --SPECIES homo_sapiens_refseq\
-            --ASSEMBLY GRCh37'''.format(tools_dir=TOOLS_ROOT, cache=VEP_CACHE)
+            --ASSEMBLY GRCh37'''.format(cache=VEP_CACHE)
         ],
         'task_dep': [
             'install_htslib',
-            'install_perl_libs',
             'copy_config'
         ],
         'uptodate': [lambda: converted_cache_exists() or unconverted_cache_exists()],

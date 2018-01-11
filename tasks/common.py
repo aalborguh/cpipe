@@ -73,6 +73,7 @@ def get_gradle_version(repo: str):
 CONDA_BIN = Path(os.getenv('CONDA_ENV_PATH', ROOT)) / 'bin'
 INSTALL_ROOT = TOOLS_ROOT
 INSTALL_BIN = INSTALL_ROOT / 'bin'
+INSTALL_BIN.mkdir(parents=True, exist_ok=True)
 INSTALL_LIB = INSTALL_ROOT / 'lib'
 PYTHON_ROOT = TOOLS_ROOT / 'python'
 JAVA_LIBS_ROOT = TOOLS_ROOT / 'java_libs'
