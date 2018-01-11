@@ -269,7 +269,7 @@ fi
    setup_env
    if [[ "x$ROOT" != "x$TARGET_DIR" ]]; then
    cp -a $ROOT/{batches,pipeline,designs,cpipe,_env,build.gradle,version.txt} $TARGET_DIR/
-   cp -a $ROOT/tools/vep_plugins/* $TARGET_DIR/tools/vep_plugins/
+   rsync -a $ROOT/tools/vep_plugins $TARGET_DIR/tools/
    fi
    if (( USE_PIP )); then
        pip install --upgrade setuptools pip
