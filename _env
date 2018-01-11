@@ -9,17 +9,19 @@ function join() {
 }
 
 function load_config {
-    CONFIG=`sed 's/\/\/.*$//' $CONFIG_FILE`
+    local configfile=${1:-$CONFIG_FILE}
+    CONFIG=`sed '/\/\//d' $configfile`
     eval "$CONFIG"
 }
 
 function set_config_variable {
     NAME="$1"
     VALUE="$2"
-    cp "$CONFIG_FILE" "$CONFIG_FILE.tmp"
-    sed 's,'^[\s]*$NAME'=\("\?\).*$,'$NAME'=\1'$VALUE'\1,g' ${CONFIG_FILE}.tmp > "$CONFIG_FILE"
-    rm "${CONFIG_FILE}.tmp"
-    load_config
+    configtmp=$(mktemp -p $PWD -t cpipe.XXXXXX)
+    cp "$CONFIG_FILE" "$configtmp"
+    sed -i -e 's,'^[\s]*$NAME'=\("\?\).*$,'$NAME'=\1'$VALUE'\1,g' "$configtmp"
+    load_config "$configtmp"
+    rm "$configtmp"
 }
 
 # Work out the directory name
