@@ -16,7 +16,7 @@ filter_vcf_to_target = {
 
     produce(file(input.vcf).name.replaceAll('\\.vcf$',".${size_min}_${size_max}.vcf")) {
         exec """
-            $BEDTOOLS/bin/bedtools intersect -header -u -a $input.vcf -b $EXOME_TARGET | awk '{ if(\$1 != "chrY" && \$1 != "chrM" ) print \$0 }' |
+            $BEDTOOLS intersect -header -u -a $input.vcf -b $EXOME_TARGET | awk '{ if(\$1 != "chrY" && \$1 != "chrM" ) print \$0 }' |
                 JAVA_OPTS="-Xmx4g -Djava.awt.headless=true" $GROOVY 
                     -cp $GROOVY_NGS/groovy-ngs-utils.jar
                     -e 'VCF.filter { Variant v -> (v.filter in ["PASS","."]) && !v.isSV() && (v.size() >= $size_min) && (v.size() <= $size_max) }'
