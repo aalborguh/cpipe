@@ -209,10 +209,11 @@ def task_obtain_trio_refinement():
     if swift_install():
         return nectar_install('1000G_phase3', {'targets': [TRIO_REFINEMENT_FILE]})
     else:
+        trioindex='{}.tbi'.format(TRIO_REFINEMENT_FILE)
         return {
             'actions': None,
             'task_dep': ['convert_trio_refinement'],
-            'targets': ["{}.tbi".format(TRIO_REFINEMENT_FILE)],
+            'targets': [trioindex]
         }
 
 def task_convert_trio_refinement():

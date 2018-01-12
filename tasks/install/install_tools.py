@@ -135,30 +135,26 @@ def task_install_gatk():
 
 
 def task_install_vep():
-    def action():
-
-        cmd("""
-        conda search ensembl-vep
-        conda install -y ensembl-vep={version}
-        """.format(version=VEP_VERSION))
-        add_to_manifest('vep')
+    def instvep():
+        sh('''
+               conda install -y ensembl-vep={v}
+        ''' .format(condabin=CONDA_BIN, v=VEP_VERSION))
 
     return {
-        'actions': [action],
-        'targets': [CONDA_BIN/ 'vep_install'],
-        # 'uptodate': [not nectar_asset_needs_update('vep')],
+      'actions': [instvep, (add_to_manifest, ['vep'])],
+      'targets': [CONDA_BIN/ 'vep_install'],
+      'uptodate': [not nectar_asset_needs_update('vep')],
+      'verbosity': 2,
     }
-
 
 def task_install_fastqc():
     script_bin = Path(CONDA_BIN, 'fastqc')
 
     def action():
-       cmd('conda install -y fastqc={version}'.format(version=FASTQC_VERSION))
-       add_to_manifest('fastqc')
+       sh('conda install -y fastqc={version}'.format(version=FASTQC_VERSION))
 
     return {
-        'actions': [action],
+        'actions': [action, (add_to_manifest, ['fastqc'])],
         'targets': [script_bin],
         'uptodate': [not nectar_asset_needs_update('fastqc')],
     }
@@ -166,11 +162,10 @@ def task_install_fastqc():
 def task_install_vcfanno():
 
     def action():
-        cmd('conda install -y vcfanno={version}'.format(version=VCFANNO_VERSION))
-        add_to_manifest('vcfanno')
+        sh('conda install -y vcfanno={version}'.format(version=VCFANNO_VERSION))
 
     return {
-        'actions': [action],
+        'actions': [action, (add_to_manifest, ['vcfanno'])],
         'targets': [CONDA_BIN / 'vcfanno'],
         'uptodate': [not nectar_asset_needs_update('vcfanno')],
     }
@@ -280,14 +275,13 @@ def task_install_vep_plugins():
 
 
 def task_install_maven():
-    target = CONDA_BIN / 'mvn'
-
-    def action():
-        cmd('conda install -y maven={version}'.format(version=MAVEN_VERSION))
-        add_to_manifest('maven')
-
     return {
-        'actions': [action],
-        'targets': [target],
+        'actions': [
+            cmd('''
+                conda install -y maven={}
+            '''.format(MAVEN_VERSION)),
+            (add_to_manifest, ['maven'])
+        ],
+        'targets': [Path(CONDA_BIN, 'mvn')],
         'uptodate': [True],
     }
