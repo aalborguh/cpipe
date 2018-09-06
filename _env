@@ -19,7 +19,10 @@ function set_config_variable {
     VALUE="$2"
     configtmp=$(mktemp -p $PWD -t cpipe.XXXXXX)
     cp "$CONFIG_FILE" "$configtmp"
-    sed -i -e 's,'^[\s]*$NAME'=\("\?\).*$,'$NAME'=\1'$VALUE'\1,g' "$configtmp"
+    # Test this:
+    # echo 'BASE="<CONFIG>"' |sed -e 's,^[\s]*'$n'=\("\).*$,'$n'=\1/test/path\1,g'
+    # Output: BASE="/test/path"
+    sed -i -e 's,^[\s]*'$NAME'=\("\?\).*$,'$NAME'=\1'$VALUE'\1,g' "$configtmp"
     load_config "$configtmp"
     rm "$configtmp"
 }
