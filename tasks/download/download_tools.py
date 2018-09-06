@@ -81,10 +81,11 @@ def task_download_gatk():
     else:
         def action():
             temp_dir = tempfile.mkdtemp()
-            download_zip("https://codeload.github.com/broadgsa/gatk-protected/tar.gz/{}".format(GATK_VERSION),
-                         temp_dir,
-                         type='tgz')
+            # download_zip("https://codeload.github.com/broadgsa/gatk-protected/tar.gz/{}".format(GATK_VERSION),
+                         # temp_dir,
+                         # type='tgz')
             sh('''
+                git clone https://github.com/broadgsa/gatk-protected.git .
                 mvn verify -P\!queue
                 GATK_JAR=`readlink -f target/GenomeAnalysisTK.jar`
                 unlink target/GenomeAnalysisTK.jar
@@ -125,8 +126,9 @@ def task_download_vep_libs():
         def action():
             temp_dir = tempfile.mkdtemp()
             sh(
-                'vep_install --VERSION {version} --NO_HTSLIB --NO_TEST --AUTO a --DESTDIR {vep_libs}'.format(version=int(float(VEP_VERSION)),
-                                                                                                                          vep_libs=temp_dir))
+                'echo y|vep_install --NO_UPDATE --VERSION {version} --NO_HTSLIB --NO_TEST \
+                --AUTO a --DESTDIR {vep_libs}'.format(version=int(float(VEP_VERSION)),
+               vep_libs=temp_dir))
             return {'dir': temp_dir}
         return {
             'task_dep': ['copy_config', 'install_perl', 'install_vep'],
@@ -145,7 +147,7 @@ def task_download_vep_plugins():
                 git init
                 git remote add origin https://github.com/Ensembl/VEP_plugins
                 git fetch
-                git checkout -t origin release/{version}
+                git checkout release/{version}
                 rm -rf .git
             '''.format(version=int(float(VEP_VERSION))), cwd=temp_dir)
             return {'dir': temp_dir}
