@@ -3,7 +3,7 @@ import os
 
 BASE = Path(os.environ.get('CPIPE_ROOT'))
 DODO = BASE / 'dodo.py'
-BATCHES = BASE / 'batches'
+BATCHES = Path(BASE / 'batches').resolve()
 PIPELINE = BASE / 'pipeline'
 DESIGNS = BASE / 'designs'
 DESIGN_LIST = set([f.stem for f in DESIGNS.iterdir()])
