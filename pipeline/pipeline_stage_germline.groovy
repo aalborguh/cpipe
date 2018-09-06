@@ -53,7 +53,6 @@ germline_genotype_gvcfs = {
                     -A AlleleBalance
                     -A VariantType
                     -stand_call_conf $call_conf 
-                    -stand_emit_conf $emit_conf
             """, "gatk_genotype"
         }
     }
