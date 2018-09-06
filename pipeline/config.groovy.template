@@ -92,7 +92,7 @@ HTSLIB="$BASE/tools"
 
 // Configuration file for additional annotation with vcfanno
 // leave empty to disable additional annotation
-VCFANNO_BIN="$TOOLS/bin/vcfanno"
+VCFANNO_BIN="$EXEDIR/vcfanno"
 VCFANNO_CONFIG="$BASE/pipeline/vcfanno.config"
 
 // Due to GATK license restrictions, you must download
@@ -129,7 +129,7 @@ GROOVY_NGS="$TOOLS/java_libs"
 // (you can create a symlink to an existing directory with 
 // that name if desired).
 // See tools/vep/README for more information
-VEP_VERSION="88"
+VEP_VERSION="91"
 VEP="$TOOLS/vep"
 
 VEP_CACHE="$DATA/vep_cache"
