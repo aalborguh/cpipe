@@ -6,7 +6,7 @@ set -e
 # Set variables
 unset PYTHONPATH
 TOOLNAME="cpipe"
-PYTHON_VERSION='3.6.0'
+PYTHON_VERSION='3.6.5'
 PYTHON_INTERPRETER='python3.6'
 ROOT=$(dirname $(readlink -f ${BASH_SOURCE}))
 SCRIPTPATH=$ROOT
@@ -43,7 +43,7 @@ function usage {
 }
 
 # Parse arguments
-ARGS=$(getopt -o visc:n:t:p:d: --long "verbose,noninteractive,no-swift,help,usage,credentials:,processes:,task:,no-pip:target-dir" -n $(basename $0) -- "$@")
+ARGS=$(getopt -o vihsc:n:t:p:d: --long "verbose,noninteractive,no-swift,help,usage,credentials:,processes:,task:,no-pip:target-dir" -n $(basename $0) -- "$@")
 eval set -- "$ARGS"
 
 PROCESSES=`nproc --all`
@@ -72,29 +72,28 @@ while true ; do
         -p|--no-pip)
           USE_PIP=0
           shift 1 ;;
-        --usage|--help)
-
+        -h|--usage|--help)
             usage
-          exit 0;;
+            exit 0;;
         -t|--task)
-          CUSTOM_TASKS="${CUSTOM_TASKS} $2"
-          shift 2;;
+            CUSTOM_TASKS="${CUSTOM_TASKS} $2"
+            shift 2;;
         -c|--credentials)
-          CREDENTIALS=$2
-          shift 2;;
+            CREDENTIALS=$2
+            shift 2;;
         -s|--no-swift)
-          USE_SWIFT=0
-          shift 1;;
+            USE_SWIFT=0
+            shift 1;;
         -d|--target-dir)
             export TARGET_DIR=$2
             export CPIPE_ROOT=$TARGET_DIR
             shift 2;;
         --)
-          break ;;
+            break ;;
         *)
-          >&2 echo "Invalid argument \"$1\""
-          usage
-          exit 1 ;;
+            >&2 echo "Invalid argument \"$1\""
+            usage
+            exit 1 ;;
     esac
 done
 
@@ -227,7 +226,7 @@ function setup_env(){
         # Install pip dependencies
         if (( USE_PIP )); then
             pip install --upgrade setuptools pip
-            pip install doit
+            pip install doit==0.30.3 # 0.31.0
             pip install -e ${ROOT}/lib -q
         fi ;
     else
@@ -268,12 +267,15 @@ fi
 
    setup_env
    if [[ "x$ROOT" != "x$TARGET_DIR" ]]; then
-   cp -a $ROOT/{batches,pipeline,designs,cpipe,_env,build.gradle,version.txt} $TARGET_DIR/
-   rsync -a $ROOT/tools/vep_plugins $TARGET_DIR/tools/
+       cp -a $ROOT/{scripts,pipeline,designs,cpipe,lib,_env,build.gradle,version.txt} $TARGET_DIR/
+       rsync -a $ROOT/tools/vep_plugins $TARGET_DIR/tools/
+       if [ ! -d $TARGET_DIR/batches ]; then
+           rsync -a $ROOT/batches $TARGET_DIR/
+       fi
    fi
    if (( USE_PIP )); then
-       pip install --upgrade setuptools pip
-       pip install -e ${ROOT}/lib -q
+       # pip install --upgrade setuptools pip
+       pip install -e ${TARGET_DIR}/lib -q
    fi ;
 
 # Run the interactive scripts first
