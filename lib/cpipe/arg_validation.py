@@ -36,7 +36,7 @@ def path_with_ext(exts:list=[]):
         if set(path.suffixes).issuperset(exts) and path.exists():
             return path.resolve()
         else:
-            raise argparse.ArgumentTypeError('The file must exist, and have a {} file extension'.format(exts))
+            raise argparse.ArgumentTypeError('The file {} must exist, and have a {} file extension'.format(path, exts))
 
     return func
 
