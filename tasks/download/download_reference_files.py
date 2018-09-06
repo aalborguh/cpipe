@@ -125,6 +125,8 @@ def task_download_ucsc():
     UCSC_ROOT.mkdir(parents = True, exist_ok = True)
     ucsc_files = ["ucsc.hg19.dict.gz", "ucsc.hg19.fasta.gz", "ucsc.hg19.fasta.fai.gz"]
     targets = [(UCSC_ROOT / file).with_suffix('') for file in ucsc_files]
+    # Need to remove ucsc.hg19.fasta.fai to avoid target conflict with samtools_index_ucsc_reference
+    targets.remove(UCSC_ROOT/"ucsc.hg19.fasta.fai")
     return {
             'actions': [
                 lambda: download_ftp_list(
@@ -143,7 +145,8 @@ def task_download_ucsc():
                 '''.format(data_dir=DATA_ROOT), cwd=DATA_ROOT, executable='bash')
 
             ],
-            'uptodate': [run_once],
+          'targets': targets,
+          'uptodate': [run_once],
      }
 
 
