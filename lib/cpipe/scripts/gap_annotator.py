@@ -480,7 +480,7 @@ def find_gaps(coverage, min_width, max_coverage, target, data_source, log, beds=
     for idx, line in enumerate(coverage):
         fields = line.strip('\n').split('\t')  # tab separated: chr, start, end, gene, offset, coverage
         if len(fields) > 5 and fields[0].lower() != 'chr':
-            coverage = int(fields[5])
+            coverage = int(fields[-1])
             if current is None:  # not in gap
                 if max_coverage == -1 or coverage <= max_coverage:  # start a new gap
                     current = {

@@ -203,7 +203,7 @@ def calculate_summary(report_cov, threshold, log):
         fields = line.strip().split('\t') # chr, start, end, gene, offset, cov
         if len(fields) > 5:
             gene = fields[3]
-            cov = int(fields[5])
+            cov = int(fields[-1])
             stats[gene].append(cov)
             overall_stats.append(cov)
             total[gene] += 1

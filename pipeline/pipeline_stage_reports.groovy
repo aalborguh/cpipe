@@ -300,7 +300,18 @@ check_coverage = {
     transform("cov.gz") to("cov.stats.median", "cov.stats.csv") {
 
         R {"""
-            bam.cov = read.table(pipe("gunzip -c $input.cov.gz"), col.names=c("chr","start","end", "gene", "offset", "cov"))
+            bam.cov = read.table(pipe("gunzip -c $input.cov.gz"))
+
+            colnames = character()
+            ncols = ncol(bam.cov)
+            if (ncols == 6) { # bed with 4 columns and two additional data columns
+              colnames=c("chr","start","end", "gene", "offset", "cov")
+            } else if (ncols == 8) { # bed with 6 columns and two additional data columns
+              colnames=c("chr","start","end", "gene", "score", "strand", "offset", "cov")
+            } else {
+              stop(paste("Unrecognized bed format with", ncols, "columns"))
+            }
+            names(bam.cov) = colnames
             meds = aggregate(bam.cov$cov, list(bam.cov$gene), median)
             write.csv(data.frame(Gene=meds[,1],MedianCov=meds$x), "$output.csv", quote=F, row.names=F)
             writeLines(as.character(median(bam.cov$cov)), "$output.median")
