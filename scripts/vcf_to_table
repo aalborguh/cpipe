@@ -21,9 +21,7 @@ else
       -F CHROM -F POS -F ID -F REF -F ALT -F QUAL -F FILTER \
       $GATK_TABLE_PARAMS \
       -R $6 \
-      --allowMissingData \
       --showFiltered \
       -V $1 \
       -o $2
 fi
- 

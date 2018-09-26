@@ -140,6 +140,7 @@ vcf_post_annotation_filter = {
             --filter "BIOTYPE match protein_coding"
             --filter "Feature" 
             --force_overwrite
+            --vcf_info_field ANN
             --format vcf
             -o $output.vcf
             --only_matched ;
